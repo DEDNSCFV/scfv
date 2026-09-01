@@ -1,36 +1,27 @@
-# SCFV v6.3 - Sistema Contable Fractal Verificable
+# SCFV – Núcleo Operativo v1.0
 
-## ¿Qué hace?
-Procesa lotes de facturas (CSV) y genera:
-- **Libro Diario** (cronológico)
-- **Libro Mayor** (saldos por cuenta)
-- **Inventario** (costo promedio ponderado)
-- **Balance General** y **Estado de Resultados** (opcional)
+**Sistema Contable Formalmente Verificado**  
+Autor: Domingo E. Díaz N. (C.P.C. Nº 183594)
 
-## ¿Cómo usarlo?
-1. Coloca tu archivo CSV en la carpeta `examples/`.
-2. Ejecuta: `python run_lote.py examples/tu_archivo.csv`
-3. Exporta los libros: `python exportar_libros.py`
-4. Revisa el reporte de divergencias en `reporte_mensual.json`.
+---
 
-## Estructura del CSV
-| Columna | Obligatoria | Descripción |
-|---------|-------------|-------------|
-| factura | Sí | Identificador único |
-| rif | Sí | RIF del cliente/proveedor |
-| monto | Sí | Monto total |
-| fecha | Sí | Fecha (YYYY-MM-DD) |
-| tipo | Sí | `compra` o `venta` |
-| producto | No | Código de producto (para inventario) |
-| cantidad | No | Cantidad (para inventario) |
-| costo_unitario | No | Costo unitario (solo compras) |
+## Propósito
 
-## Personalización
-- Edita `reglas/SCFV.scfv` para cambiar tasas, exenciones y cuentas.
-- Los fractales están en `reglas/*.scfv` (lenguaje natural formalizado).
+El SCFV es un sistema contable local‑first diseñado para contadores públicos. Este núcleo operativo cubre los módulos esenciales:
 
-## Requisitos
-- Python 3.8+ (Termux / Linux / macOS / Windows WSL)
+- **Diario, Mayor, Inventario, Fiscal, Balance General**
+- **Multimoneda** (VES, USD, EUR, CNY, TRY, RUB)
+- **Inflación (NIC 29)** con factores históricos y manuales
+- **Auditoría criptográfica** con hash chain
+- **CLI profesional** (Termux / Linux / macOS)
 
-## Contacto
-Domingo E. Díaz N. (C.P.C.)
+---
+
+## Instalación
+
+```bash
+tar -xzvf SCFV_Nucleo_Operativo_v1.0.tar.gz
+cd scfv
+bash INSTALAR.sh
+./scfv --version   # Debe mostrar "SCFV v1.0"
+./scfv salud       # Verifica integridad del sistema
