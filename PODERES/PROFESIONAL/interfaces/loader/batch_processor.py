@@ -1,0 +1,103 @@
+"""
+SCFV v7.0 - Procesador de Lotes (solo fractales .scfv)
+"""
+import csv
+import json
+from PODERES.PROFESIONAL.interfaces.cli.integrador import Integrador
+from DOMINIOS.ventas.ventas import FractalVentas
+from DOMINIOS.compras.compras import FractalCompras
+from DOMINIOS.inventario.inventario import FractalInventario
+from DOMINIOS.fiscal.fiscal import FractalFiscal
+
+class BatchProcessor:
+    def __init__(self):
+        self.integrador = Integrador(fractales=[FractalVentas, FractalCompras, FractalInventario, FractalFiscal])
+        self.reporte = {
+            "total": 0,
+            "procesados": 0,
+            "convergencias": [],
+            "divergencias": [],
+            "hash_final": None
+        }
+
+    def _to_int(self, valor, campo):
+        """Convierte un string numérico a entero escalado por 10^8 (8 decimales fijos).
+        No usa float. Acepta formatos: '123.45', '123,45', '123'"""
+        if valor is None or valor == "":
+            return 0, None
+        try:
+            s = str(valor).strip().replace(',', '')
+            if '.' in s:
+                parte_entera, parte_decimal = s.split('.')
+                parte_decimal = (parte_decimal + '0'*8)[:8]
+            else:
+                parte_entera = s
+                parte_decimal = '0'*8
+            negativo = False
+            if parte_entera.startswith('-'):
+                negativo = True
+                parte_entera = parte_entera[1:]
+            entero = int(parte_entera + parte_decimal)
+            if negativo:
+                entero = -entero
+            return entero, None
+        except Exception as e:
+            return None, f"Error convirtiendo '{campo}': {valor} -> {e}"
+
+    def procesar_csv(self, ruta_csv: str, separador: str = ','):
+        print(f"📂 Procesando lote desde: {ruta_csv}")
+        with open(ruta_csv, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f, delimiter=separador)
+            filas = list(reader)
+
+        self.reporte["total"] = len(filas)
+
+        for idx, fila in enumerate(filas):
+            evidencia = fila.copy()
+            conversion_ok = True
+            for key in ["monto", "cantidad", "costo_unitario"]:
+                if key in evidencia and evidencia[key]:
+                    valor, error = self._to_int(evidencia[key], key)
+                    if error:
+                        self.reporte["divergencias"].append({
+                            "indice": idx,
+                            "error": error,
+                            "datos": evidencia
+                        })
+                        conversion_ok = False
+                        break
+                    else:
+                        evidencia[key] = valor
+            if not conversion_ok:
+                continue
+
+            tipo = evidencia.get('tipo', '').lower().strip()
+            evidencia['tipo'] = tipo
+
+            try:
+                resultado = self.integrador.procesar_evidencia(evidencia, None)
+                if resultado["estado"] == "completado":
+                    self.reporte["convergencias"].append({
+                        "indice": idx,
+                        "correlation_id": resultado["correlation_id"],
+                        "asiento_id": resultado["asiento_id"]
+                    })
+                else:
+                    self.reporte["divergencias"].append({
+                        "indice": idx,
+                        "error": "Procesamiento incompleto",
+                        "datos": evidencia
+                    })
+                self.reporte["procesados"] += 1
+            except Exception as e:
+                self.reporte["divergencias"].append({
+                    "indice": idx,
+                    "error": str(e),
+                    "datos": evidencia
+                })
+
+        self.reporte["hash_final"] = self.integrador.event_store.obtener_hash_final()
+        with open("reporte_mensual.json", "w", encoding="utf-8") as f:
+            json.dump(self.reporte, f, indent=2, default=str)
+        print("✅ Reporte guardado en 'reporte_mensual.json'")
+        return self.reporte

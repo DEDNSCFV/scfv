@@ -1,0 +1,30 @@
+# ========================================================================
+# SCFV v7.2 — CONTEXTO NORMATIVO Y CONTABLE (Minimalista)
+# ========================================================================
+
+CONTEXTO:
+  TEMPORAL:
+    FECHA_INICIO = "2026-01-01"
+    MONEDA = "VES"
+
+  NORMATIVO:
+    IVA_TASA = 0.12
+    ISLR_RETENCION_VENTAS = 0.01
+    IVA_RETENCION_COMPRAS = 0.75
+    UMBRAL_RETENCION = 5000.0
+    EXENCIONES = ["V-12345678", "J-98765432"]
+
+  CONTABLE:
+    CUENTA_CAJA = "110101"
+    CUENTA_VENTAS = "410101"
+    CUENTA_IVA_PAGAR = "210201"
+    CUENTA_IVA_COBRAR = "210202"
+    CUENTA_PROVEEDORES = "210101"
+    CUENTA_INVENTARIO = "140101"
+    CUENTA_COSTO_VENTA = "610101"
+
+  CLASIFICACION:
+    ACTIVO = ["110101", "140101", "210202"]
+    PASIVO = ["210101", "210201"]
+    INGRESO = ["410101"]
+    GASTO = ["610101"]

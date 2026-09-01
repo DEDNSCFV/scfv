@@ -1,0 +1,6 @@
+#!/bin/bash
+# SCFV v6 — Script de entrada
+# Autor: Domingo E. Díaz N. (C.P.C. Nº 183594)
+
+cd ~/scfv_v6
+python3 src/cli/main.py "$@"

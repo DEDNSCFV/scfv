@@ -1,0 +1,37 @@
+start: (contexto_def | booleano_def | tetrada_def | fractal_def)*
+
+contexto_def: "CONTEXTO" ":" contexto_section+
+contexto_section: section_name ":" assignment+
+section_name: "TEMPORAL" | "NORMATIVO" | "CONTABLE" | "CLASIFICACION"
+
+assignment: NAME "=" value
+
+booleano_def: "BOOLEANO" ":" booleano_item+
+booleano_item: NAME "=" value
+
+tetrada_def: "TETRADA" ":" tetrada_item+
+tetrada_item: NAME "=" value
+
+fractal_def: "FRACTAL" NAME "DOMINIO" "CONTABLE" ":" rule+
+
+rule: "REGLA" NAME ":" condition "ENTONCES" action+
+condition: "SI" expr ( ("Y" | "O") expr )*
+expr: comparison
+comparison: value ("==" | "!=" | ">" | "<" | ">=" | "<=") value
+value: NUMBER | STRING | BOOLEAN | NAME | list_value
+list_value: "[" [value ("," value)*] "]"
+
+action: assignment | generate
+generate: "GENERAR" "CONSECUENCIA" "(" param_list ")"
+param_list: param ("," param)*
+param: NAME "=" value
+
+// Terminales
+NAME: /[A-Za-z_][A-Za-z0-9_]*/
+NUMBER: /-?\d+(\.\d+)?/
+STRING: /"[^"]*"/
+BOOLEAN: "VERDADERO" | "FALSO"
+
+%import common.WS
+%ignore WS
+%ignore /#.*/

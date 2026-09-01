@@ -1,0 +1,9 @@
+FRACTAL VENTAS DOMINIO CONTABLE:
+
+  REGLA VENTA_NACIONAL:
+    SI monto > 0 Y tipo == "venta" ENTONCES
+      base = monto / (1 + IVA_TASA)
+      iva = monto - base
+      GENERAR CONSECUENCIA (cuenta=CUENTA_CAJA, naturaleza=DEUDORA, movimiento=AUMENTA, monto=monto)
+      GENERAR CONSECUENCIA (cuenta=CUENTA_VENTAS, naturaleza=ACREEDORA, movimiento=AUMENTA, monto=base)
+      GENERAR CONSECUENCIA (cuenta=CUENTA_IVA_PAGAR, naturaleza=ACREEDORA, movimiento=AUMENTA, monto=iva)

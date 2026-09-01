@@ -1,0 +1,123 @@
+"""
+SCFV v6.3 - Compilador/Loader del Lenguaje .scfv (versión estable)
+"""
+import re
+import json
+from typing import Dict, Any, List, Callable
+
+ESCALA = 10 ** 8
+
+class SCFVLoader:
+    @staticmethod
+    def cargar_contexto(ruta="PODERES/FORMAL/dsl/contexto/SCFV.scfv") -> Dict:
+        with open(ruta, 'r', encoding='utf-8') as f:
+            texto = f.read()
+        contexto = {}
+        seccion_actual = None
+        for linea in texto.split('\n'):
+            linea = linea.strip()
+            if not linea or linea.startswith('#'):
+                continue
+            if re.match(r'^[A-Z_]+:$', linea):
+                seccion_actual = linea.rstrip(':')
+                contexto[seccion_actual] = {}
+            elif seccion_actual and '=' in linea and not linea.startswith('TABLA_VERDAD'):
+                clave, valor = linea.split('=', 1)
+                clave = clave.strip()
+                valor = valor.strip()
+                try:
+                    if valor.startswith('[') or valor.startswith('{'):
+                        contexto[seccion_actual][clave] = eval(valor)
+                    else:
+                        # Quitar comillas dobles si existen
+                        if valor.startswith('"') and valor.endswith('"'):
+                            valor = valor[1:-1]
+                        if '.' in valor:
+                            contexto[seccion_actual][clave] = int(float(valor) * ESCALA)
+                        else:
+                            try:
+                                contexto[seccion_actual][clave] = int(valor)
+                            except:
+                                contexto[seccion_actual][clave] = valor
+                except:
+                    contexto[seccion_actual][clave] = valor
+        return contexto
+
+    @staticmethod
+    def _traducir_condicion(cond: str) -> str:
+        cond = cond.replace(' Y ', ' and ')
+        cond = cond.replace(' O ', ' or ')
+        return cond
+
+    @staticmethod
+    def cargar_fractal(ruta: str, contexto: Dict) -> Callable:
+        with open(ruta, 'r', encoding='utf-8') as f:
+            texto = f.read()
+        
+        bloques = re.findall(
+            r'REGLA\s+(\w+):\s*SI\s+(.*?)\s+ENTONCES\s+(.*?)(?=\n\s*REGLA|\Z)',
+            texto, re.DOTALL | re.IGNORECASE
+        )
+        
+        reglas = []
+        for nombre, condicion, acciones_raw in bloques:
+            lineas = acciones_raw.strip().split('\n')
+            asignaciones = []
+            generaciones = []
+            for linea in lineas:
+                linea = linea.strip()
+                if not linea:
+                    continue
+                if '=' in linea and 'GENERAR' not in linea:
+                    asignaciones.append(linea)
+                elif linea.startswith('GENERAR CONSECUENCIA'):
+                    params_str = re.search(r'GENERAR CONSECUENCIA\s*\((.*?)\)', linea)
+                    if params_str:
+                        generaciones.append(params_str.group(1).strip())
+            reglas.append({
+                'nombre': nombre.strip(),
+                'condicion': condicion.strip(),
+                'asignaciones': asignaciones,
+                'generaciones': generaciones
+            })
+        
+        def fractal_func(evento):
+            consecuencias = []
+            vars_dict = {}
+            for k, v in contexto.items():
+                if isinstance(v, dict):
+                    for kk, vv in v.items():
+                        vars_dict[kk] = vv
+                else:
+                    vars_dict[k] = v
+            vars_dict.update(evento)
+            vars_dict['ESCALA'] = ESCALA
+            
+            for r in reglas:
+                cond = r['condicion']
+                cond = SCFVLoader._traducir_condicion(cond)
+                try:
+                    cond_ok = eval(cond, {"__builtins__": {}}, vars_dict)
+                except:
+                    cond_ok = False
+                
+                if cond_ok:
+                    for asig in r['asignaciones']:
+                        try:
+                            exec(asig, {"__builtins__": {}}, vars_dict)
+                        except:
+                            pass
+                    for gen in r['generaciones']:
+                        params = {}
+                        for item in gen.split(','):
+                            if '=' in item:
+                                k, v = item.split('=', 1)
+                                k = k.strip()
+                                v = v.strip().strip('"')
+                                try:
+                                    params[k] = eval(v, {"__builtins__": {}}, vars_dict)
+                                except:
+                                    params[k] = v
+                        consecuencias.append(params)
+            return consecuencias
+        return fractal_func

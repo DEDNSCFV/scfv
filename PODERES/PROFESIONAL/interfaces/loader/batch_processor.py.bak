@@ -1,0 +1,94 @@
+"""
+SCFV v7.0 - Procesador de Lotes (solo fractales .scfv)
+"""
+import csv
+import json
+import glob
+from PODERES.PROFESIONAL.interfaces.cli.integrador import Integrador
+from PODERES.FORMAL.dsl.scfv_loader import SCFVLoader
+
+class BatchProcessor:
+    def __init__(self):
+        self.integrador = Integrador()
+        self.contexto = SCFVLoader.cargar_contexto()
+        self.fractales = []
+        for f in glob.glob("reglas/*.scfv"):
+            if not f.endswith("SCFV.scfv"):
+                self.fractales.append(SCFVLoader.cargar_fractal(f, self.contexto))
+        self.reporte = {
+            "total": 0,
+            "procesados": 0,
+            "convergencias": [],
+            "divergencias": [],
+            "hash_final": None
+        }
+
+    def _to_int(self, valor, campo):
+        if valor is None or valor == "":
+            return 0, None
+        try:
+            if isinstance(valor, str):
+                valor = valor.replace(',', '')
+            return int(float(valor) * 10**8), None
+        except (ValueError, TypeError):
+            return None, f"Valor no numérico en '{campo}': '{valor}'"
+
+    def procesar_csv(self, ruta_csv: str, separador: str = ','):
+        print(f"📂 Procesando lote desde: {ruta_csv}")
+        with open(ruta_csv, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f, delimiter=separador)
+            filas = list(reader)
+
+        self.reporte["total"] = len(filas)
+
+        for idx, fila in enumerate(filas):
+            evidencia = fila.copy()
+            conversion_ok = True
+            for key in ["monto", "cantidad", "costo_unitario"]:
+                if key in evidencia and evidencia[key]:
+                    valor, error = self._to_int(evidencia[key], key)
+                    if error:
+                        self.reporte["divergencias"].append({
+                            "indice": idx,
+                            "error": error,
+                            "datos": evidencia
+                        })
+                        conversion_ok = False
+                        break
+                    else:
+                        evidencia[key] = valor
+
+            if not conversion_ok:
+                continue
+
+            tipo = evidencia.get('tipo', '').lower().strip()
+            evidencia['tipo'] = tipo
+
+            try:
+                resultado = self.integrador.procesar_evidencia(evidencia, self.fractales)
+                if resultado["estado"] == "completado":
+                    self.reporte["convergencias"].append({
+                        "indice": idx,
+                        "correlation_id": resultado["correlation_id"],
+                        "asiento_id": resultado["asiento_id"]
+                    })
+                else:
+                    self.reporte["divergencias"].append({
+                        "indice": idx,
+                        "error": "Procesamiento incompleto",
+                        "datos": evidencia
+                    })
+                self.reporte["procesados"] += 1
+
+            except Exception as e:
+                self.reporte["divergencias"].append({
+                    "indice": idx,
+                    "error": str(e),
+                    "datos": evidencia
+                })
+
+        self.reporte["hash_final"] = self.integrador.event_store.obtener_hash_final()
+        with open("reporte_mensual.json", "w", encoding="utf-8") as f:
+            json.dump(self.reporte, f, indent=2, default=str)
+        print("✅ Reporte guardado en 'reporte_mensual.json'")
+        return self.reporte

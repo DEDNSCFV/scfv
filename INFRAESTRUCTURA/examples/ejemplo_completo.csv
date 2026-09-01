@@ -1,0 +1,5 @@
+factura,rif,monto,fecha,tipo,producto,cantidad,costo_unitario
+COMP-001,J-12345678,5000.0,2026-08-01,compra,PROD-A,10,500.0
+COMP-002,J-98765432,3000.0,2026-08-02,compra,PROD-B,5,600.0
+VENT-001,V-11111111,3500.0,2026-08-03,venta,PROD-A,5,0
+VENT-002,V-22222222,2800.0,2026-08-04,venta,PROD-B,4,0

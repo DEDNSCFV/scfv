@@ -1,0 +1,23 @@
+{
+  "version": "V1",
+  "normativo": {
+    "IVA_TASA": 0.12,
+    "ISLR_RETENCION_VENTAS": 0.0,
+    "IVA_RETENCION_COMPRAS": 0.0,
+    "UMBRAL_RETENCION": 0.0,
+    "EXENCIONES": []
+  },
+  "contable": {
+    "CUENTA_CAJA": "110101",
+    "CUENTA_VENTAS": "410101",
+    "CUENTA_IVA_PAGAR": "210201",
+    "CUENTA_IVA_COBRAR": "210202",
+    "CUENTA_PROVEEDORES": "210101",
+    "CUENTA_INVENTARIO": "140101",
+    "CUENTA_COSTO_VENTA": "610101"
+  },
+  "clasificacion_cuentas": {
+    "110101": "ACTIVO", "140101": "ACTIVO", "210101": "PASIVO",
+    "210201": "PASIVO", "210202": "ACTIVO", "410101": "INGRESO", "610101": "GASTO"
+  }
+}

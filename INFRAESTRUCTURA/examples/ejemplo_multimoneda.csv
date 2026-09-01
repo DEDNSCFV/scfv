@@ -1,0 +1,3 @@
+factura,rif,monto,fecha,tipo,moneda,producto,cantidad,costo_unitario
+FACT-001,J-12345678,100.0,2026-08-31,venta,USD,PROD-A,1,100.0
+FACT-002,J-98765432,200.0,2026-08-31,venta,EUR,PROD-B,2,100.0

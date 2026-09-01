@@ -1,0 +1,7 @@
+FRACTAL FISCAL DOMINIO CONTABLE:
+
+  REGLA RETENCION_IVA:
+    SI tipo == "compra" Y monto > UMBRAL_RETENCION ENTONCES
+      iva_retenido = (monto * IVA_TASA / 100000000) * IVA_RETENCION_COMPRAS / 100000000
+      GENERAR CONSECUENCIA (cuenta=CUENTA_IVA_COBRAR, naturaleza=DEUDORA, movimiento=AUMENTA, monto=iva_retenido)
+      GENERAR CONSECUENCIA (cuenta=CUENTA_IVA_PAGAR, naturaleza=ACREEDORA, movimiento=AUMENTA, monto=iva_retenido)

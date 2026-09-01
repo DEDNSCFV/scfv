@@ -1,0 +1,10 @@
+FRACTAL INVENTARIO DOMINIO CONTABLE:
+
+  REGLA ENTRADA_INVENTARIO:
+    SI tipo == "compra" Y producto != "" Y cantidad > 0 ENTONCES
+      GENERAR CONSECUENCIA (cuenta=CUENTA_INVENTARIO, naturaleza=DEUDORA, movimiento=AUMENTA, monto=cantidad * costo_unitario)
+
+  REGLA SALIDA_INVENTARIO:
+    SI tipo == "venta" Y producto != "" Y cantidad > 0 ENTONCES
+      GENERAR CONSECUENCIA (cuenta=CUENTA_COSTO_VENTA, naturaleza=DEUDORA, movimiento=AUMENTA, monto=cantidad * costo_promedio)
+      GENERAR CONSECUENCIA (cuenta=CUENTA_INVENTARIO, naturaleza=DEUDORA, movimiento=DISMINUYE, monto=cantidad * costo_promedio)

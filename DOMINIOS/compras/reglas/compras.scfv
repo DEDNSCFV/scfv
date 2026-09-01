@@ -1,0 +1,5 @@
+FRACTAL COMPRAS DOMINIO CONTABLE:
+  REGLA COMPRA_NACIONAL:
+    SI monto > 0 Y tipo == "compra" ENTONCES
+      GENERAR CONSECUENCIA (cuenta=CUENTA_INVENTARIO, naturaleza=DEUDORA, movimiento=AUMENTA, monto=monto)
+      GENERAR CONSECUENCIA (cuenta=CUENTA_PROVEEDORES, naturaleza=ACREEDORA, movimiento=AUMENTA, monto=monto)
